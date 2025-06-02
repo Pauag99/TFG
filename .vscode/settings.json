@@ -1,5 +1,6 @@
 {
   "java.project.referencedLibraries": [
-    "C:/Users/Pauag/Documents/javafx-sdk-24.0.1/lib/*.jar"
+    "C:/Users/Pauag/Documents/javafx-sdk-24.0.1/lib/*.jar",
+    "C:/Users/Pauag/Documents/TFG DATA/json-20240303.jar"
   ]
 }

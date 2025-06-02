@@ -6,6 +6,7 @@ import javafx.scene.control.*;
 import javafx.scene.layout.*;
 import javafx.stage.FileChooser;
 import javafx.stage.Stage;
+import org.json.JSONObject;
 
 import java.io.*;
 
@@ -30,8 +31,8 @@ public class Main extends Application {
         Label mensajeLabel = new Label();
 
         ComboBox<String> selectorAlgoritmo = new ComboBox<>();
-        selectorAlgoritmo.getItems().addAll("VADER", "TextBlob");
-        selectorAlgoritmo.setValue("VADER");
+        selectorAlgoritmo.getItems().addAll("VADER", "TextBlob", "BERT");
+        selectorAlgoritmo.setPromptText("Selecciona un algoritmo");
 
         Button botonAnalizar = new Button("Analizar sentimientos");
 
@@ -48,21 +49,28 @@ public class Main extends Application {
     }
 
     try {
-        String script = algoritmoSeleccionado.equalsIgnoreCase("VADER") ? "vader.py" :
-                        algoritmoSeleccionado.equalsIgnoreCase("TextBlob") ? "analizador_textblob.py" : null;
-
-        if (script == null) {
-            Alert alerta = new Alert(Alert.AlertType.WARNING);
-            alerta.setHeaderText(null);
-            alerta.setContentText("⚠️ Algoritmo no soportado.");
-            alerta.showAndWait();
-            return;
+        String script;
+        switch (algoritmoSeleccionado.toUpperCase()) {
+            case "VADER":
+                script = "vader.py";
+                break;
+            case "TEXTBLOB":
+                script = "analizador_textblob.py";
+                break;
+            case "BERT":
+                script = "analizador_bert.py";
+                break;
+            default:
+                Alert alerta = new Alert(Alert.AlertType.WARNING);
+                alerta.setHeaderText(null);
+                alerta.setContentText("⚠️ Algoritmo no soportado.");
+                alerta.showAndWait();
+                return;
         }
 
         ProcessBuilder pb = new ProcessBuilder("python", "python/" + script);
         Process process = pb.start();
 
-        // Enviar JSON al script
         try (BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(process.getOutputStream()))) {
             String json = "{\"texto\": \"" + textoPreprocesado
                     .replace("\\", "\\\\")
@@ -73,7 +81,6 @@ public class Main extends Application {
             writer.flush();
         }
 
-        // Leer salida estándar
         StringBuilder salida = new StringBuilder();
         try (BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()))) {
             String linea;
@@ -82,30 +89,9 @@ public class Main extends Application {
             }
         }
 
-        // Leer errores (stderr)
-        try (BufferedReader errorReader = new BufferedReader(new InputStreamReader(process.getErrorStream()))) {
-            String lineaError;
-            while ((lineaError = errorReader.readLine()) != null) {
-                System.err.println("❌ Error desde Python: " + lineaError);
-            }
-        }
-
-        System.out.println("📥 Respuesta de Python: " + salida.toString());
-
         Alert alerta = new Alert(Alert.AlertType.INFORMATION);
-        alerta.setHeaderText("Resultado del análisis");
-
-        String output = salida.toString();
-        if (output.contains("\"resultado\"")) {
-            alerta.setContentText("Resultado: " + output);
-        } else if (output.contains("\"error\"")) {
-            alerta.setAlertType(Alert.AlertType.ERROR);
-            alerta.setHeaderText("Error del script");
-            alerta.setContentText(output);
-        } else {
-            alerta.setContentText("⚠ No se pudo interpretar la respuesta.");
-        }
-
+        alerta.setHeaderText("Resultado del análisis con " + algoritmoSeleccionado);
+        alerta.setContentText(salida.toString());
         alerta.showAndWait();
 
     } catch (IOException ex) {
