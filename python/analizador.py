@@ -1,15 +1,22 @@
 import sys
 import json
+import nltk
+from nltk.sentiment import SentimentIntensityAnalyzer
 
-entrada = json.loads(sys.stdin.read())
-texto = entrada['texto'].lower()
+# Descargar el léxico de VADER (solo la primera vez)
+nltk.download('vader_lexicon', quiet=True)
 
-# Análisis simple: esto lo puedes cambiar a un modelo real
-if "bien" in texto or "excelente" in texto:
-    resultado = "bueno"
-elif "mal" in texto or "horrible" in texto:
-    resultado = "malo"
-else:
-    resultado = "neutro"
+def analizar_sentimiento(texto):
+    sia = SentimentIntensityAnalyzer()
+    scores = sia.polarity_scores(texto)
+    return scores
 
-print(json.dumps({'resultado': resultado}))
+if __name__ == "__main__":
+    try:
+        entrada = json.loads(sys.stdin.read())
+        texto = entrada.get("texto", "")
+        resultado = analizar_sentimiento(texto)
+
+        print(json.dumps({"resultado": resultado}))
+    except Exception as e:
+        print(json.dumps({"error": str(e)}))
