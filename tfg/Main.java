@@ -9,6 +9,11 @@ import javafx.stage.Stage;
 import org.json.JSONObject;
 
 import java.io.*;
+import java.nio.file.Files;
+import java.nio.file.Paths;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
+import java.util.stream.Collectors;
 
 public class Main extends Application {
 
@@ -27,6 +32,7 @@ public class Main extends Application {
 
         Button botonCargar = new Button("Cargar texto");
         Button botonPreprocesar = new Button("Preprocesar");
+        Button botonVerHistorial = new Button("Ver historial");
         Label resultadoLabel = new Label();
         Label mensajeLabel = new Label();
 
@@ -37,75 +43,67 @@ public class Main extends Application {
         Button botonAnalizar = new Button("Analizar sentimientos");
 
         botonAnalizar.setOnAction(e -> {
-    String algoritmoSeleccionado = selectorAlgoritmo.getValue();
-    String textoPreprocesado = entradaTexto.getText();
+            String algoritmoSeleccionado = selectorAlgoritmo.getValue();
+            String textoPreprocesado = entradaTexto.getText();
 
-    if (textoPreprocesado == null || textoPreprocesado.isEmpty()) {
-        Alert alerta = new Alert(Alert.AlertType.WARNING);
-        alerta.setHeaderText(null);
-        alerta.setContentText("⚠️ Primero debes preprocesar el texto.");
-        alerta.showAndWait();
-        return;
-    }
-
-    try {
-        String script;
-        switch (algoritmoSeleccionado.toUpperCase()) {
-            case "VADER":
-                script = "vader.py";
-                break;
-            case "TEXTBLOB":
-                script = "analizador_textblob.py";
-                break;
-            case "BERT":
-                script = "analizador_bert.py";
-                break;
-            case "NAIVE BAYES":
-                script = "analizador_nb.py";
-                break;
-            default:
-                Alert alerta = new Alert(Alert.AlertType.WARNING);
-                alerta.setHeaderText(null);
-                alerta.setContentText("⚠️ Algoritmo no soportado.");
-                alerta.showAndWait();
+            if (textoPreprocesado == null || textoPreprocesado.isEmpty()) {
+                mostrarAlerta(Alert.AlertType.WARNING, "⚠️ Primero debes preprocesar el texto.");
                 return;
-        }
-
-        ProcessBuilder pb = new ProcessBuilder("python", "python/" + script);
-        Process process = pb.start();
-
-        try (BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(process.getOutputStream()))) {
-            String json = "{\"texto\": \"" + textoPreprocesado
-                    .replace("\\", "\\\\")
-                    .replace("\"", "\\\"")
-                    .replace("\n", "\\n")
-                    .replace("\r", "\\r") + "\"}";
-            writer.write(json);
-            writer.flush();
-        }
-
-        StringBuilder salida = new StringBuilder();
-        try (BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()))) {
-            String linea;
-            while ((linea = reader.readLine()) != null) {
-                salida.append(linea);
             }
-        }
 
-        Alert alerta = new Alert(Alert.AlertType.INFORMATION);
-        alerta.setHeaderText("Resultado del análisis con " + algoritmoSeleccionado);
-        alerta.setContentText(salida.toString());
-        alerta.showAndWait();
+            try {
+                String script;
+                switch (algoritmoSeleccionado.toUpperCase()) {
+                    case "VADER":
+                        script = "vader.py";
+                        break;
+                    case "TEXTBLOB":
+                        script = "analizador_textblob.py";
+                        break;
+                    case "BERT":
+                        script = "analizador_bert.py";
+                        break;
+                    case "NAIVE BAYES":
+                        script = "analizador_nb.py";
+                        break;
+                    default:
+                        mostrarAlerta(Alert.AlertType.WARNING, "⚠️ Algoritmo no soportado.");
+                        return;
+                }
 
-    } catch (IOException ex) {
-        ex.printStackTrace();
-        Alert error = new Alert(Alert.AlertType.ERROR);
-        error.setHeaderText("Error al ejecutar el análisis.");
-        error.setContentText(ex.getMessage());
-        error.showAndWait();
-    }
-});
+                ProcessBuilder pb = new ProcessBuilder("python", "python/" + script);
+                Process process = pb.start();
 
+                try (BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(process.getOutputStream()))) {
+                    String json = "{\"texto\": \"" + textoPreprocesado
+                            .replace("\\", "\\\\")
+                            .replace("\"", "\\\"")
+                            .replace("\n", "\\n")
+                            .replace("\r", "\\r") + "\"}";
+                    writer.write(json);
+                    writer.flush();
+                }
+
+                StringBuilder salida = new StringBuilder();
+                try (BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()))) {
+                    String linea;
+                    while ((linea = reader.readLine()) != null) {
+                        salida.append(linea);
+                    }
+                }
+
+                mostrarAlerta(Alert.AlertType.INFORMATION, "Resultado del análisis con " + algoritmoSeleccionado, salida.toString());
+
+                String nombreArchivo = archivoCargado != null ? archivoCargado.getName() : "Texto manual";
+                guardarHistorial(algoritmoSeleccionado, nombreArchivo, salida.toString());
+
+            } catch (IOException ex) {
+                ex.printStackTrace();
+                mostrarAlerta(Alert.AlertType.ERROR, "Error al ejecutar el análisis.", ex.getMessage());
+            }
+        });
+
+        botonVerHistorial.setOnAction(e -> mostrarHistorial());
 
         botonCargar.setOnAction(e -> {
             FileChooser fileChooser = new FileChooser();
@@ -115,7 +113,7 @@ public class Main extends Application {
 
             if (archivo != null) {
                 try {
-                    String contenido = new String(java.nio.file.Files.readAllBytes(archivo.toPath()));
+                    String contenido = new String(Files.readAllBytes(archivo.toPath()));
                     if (contenido.trim().isEmpty()) {
                         mensajeLabel.setText("⚠️ El archivo está vacío.");
                         entradaTexto.clear();
@@ -135,13 +133,13 @@ public class Main extends Application {
         botonPreprocesar.setOnAction(e -> {
             if (archivoCargado != null) {
                 try {
-                    String contenido = new String(java.nio.file.Files.readAllBytes(archivoCargado.toPath()));
+                    String contenido = new String(Files.readAllBytes(archivoCargado.toPath()));
                     String resultadoPython = preprocesarTextoConPython(contenido);
 
                     if (resultadoPython != null) {
                         File archivoNuevo = new File(archivoCargado.getParentFile(),
                                 archivoCargado.getName().replace(".txt", "") + "_preprocesado.txt");
-                        java.nio.file.Files.write(archivoNuevo.toPath(), resultadoPython.getBytes());
+                        Files.write(archivoNuevo.toPath(), resultadoPython.getBytes());
                         mensajeLabel.setText("✅ Preprocesado por Python y guardado como: " + archivoNuevo.getName());
                         entradaTexto.setText(resultadoPython);
                     } else {
@@ -155,7 +153,7 @@ public class Main extends Application {
             }
         });
 
-        HBox botones = new HBox(10, botonCargar, botonPreprocesar);
+        HBox botones = new HBox(10, botonCargar, botonPreprocesar, botonVerHistorial);
         botones.setStyle("-fx-alignment: center;");
 
         HBox analisisBox = new HBox(10, selectorAlgoritmo, botonAnalizar);
@@ -171,10 +169,51 @@ public class Main extends Application {
         );
         layout.setStyle("-fx-padding: 20; -fx-alignment: center;");
 
-        Scene scene = new Scene(layout, 500, 400);
+        Scene scene = new Scene(layout, 600, 450);
         primaryStage.setTitle("Analizador de Texto");
         primaryStage.setScene(scene);
         primaryStage.show();
+    }
+
+    private void mostrarAlerta(Alert.AlertType tipo, String titulo, String mensaje) {
+        Alert alerta = new Alert(tipo);
+        alerta.setHeaderText(titulo);
+        alerta.setContentText(mensaje);
+        alerta.showAndWait();
+    }
+
+    private void mostrarAlerta(Alert.AlertType tipo, String mensaje) {
+        mostrarAlerta(tipo, null, mensaje);
+    }
+
+    private void mostrarHistorial() {
+        Stage ventanaHistorial = new Stage();
+        TextArea areaHistorial = new TextArea();
+        areaHistorial.setEditable(false);
+
+        try {
+            String contenido = Files.lines(Paths.get("historial_analisis.csv"))
+                    .collect(Collectors.joining("\n"));
+            areaHistorial.setText(contenido);
+        } catch (IOException ex) {
+            areaHistorial.setText("No se pudo cargar el historial.");
+        }
+
+        Scene escena = new Scene(new VBox(areaHistorial), 700, 400);
+        ventanaHistorial.setTitle("Historial de análisis");
+        ventanaHistorial.setScene(escena);
+        ventanaHistorial.show();
+    }
+
+    private void guardarHistorial(String algoritmo, String archivoTexto, String resultado) {
+        try (FileWriter writer = new FileWriter("historial_analisis.csv", true)) {
+            String fecha = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"));
+            String linea = String.format("\"%s\",\"%s\",\"%s\",\"%s\"\n",
+                    fecha, algoritmo, archivoTexto, resultado.replace("\"", "'").replace("\n", " "));
+            writer.write(linea);
+        } catch (IOException ex) {
+            System.err.println("❌ Error al guardar el historial: " + ex.getMessage());
+        }
     }
 
     private String preprocesarTextoConPython(String texto) {

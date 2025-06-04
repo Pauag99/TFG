@@ -1,0 +1,4 @@
+"2025-06-04 16:19:43","VADER","SeñorAnillosBueno_preprocesado.txt","{'resultado': {'neg': 0.076, 'neu': 0.626, 'pos': 0.298, 'compound': 0.8502}}"
+"2025-06-04 16:19:47","TEXTBLOB","SeñorAnillosBueno_preprocesado.txt","{'resultado': {'polarity': 0.69, 'subjectivity': 0.6}}"
+"2025-06-04 16:19:56","BERT","SeñorAnillosBueno_preprocesado.txt","{'resultado': {'label': 'POSITIVE', 'score': 0.9979463219642639}}"
+"2025-06-04 16:20:00","NAIVE BAYES","SeñorAnillosBueno_preprocesado.txt","{'resultado': {'etiqueta': 'positive', 'probabilidades': {'negative': 0.1081, 'neutral': 0.075, 'positive': 0.8169}}}"
