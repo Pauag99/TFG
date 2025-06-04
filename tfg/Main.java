@@ -31,7 +31,7 @@ public class Main extends Application {
         Label mensajeLabel = new Label();
 
         ComboBox<String> selectorAlgoritmo = new ComboBox<>();
-        selectorAlgoritmo.getItems().addAll("VADER", "TextBlob", "BERT");
+        selectorAlgoritmo.getItems().addAll("VADER", "TEXTBLOB", "BERT", "NAIVE BAYES");
         selectorAlgoritmo.setPromptText("Selecciona un algoritmo");
 
         Button botonAnalizar = new Button("Analizar sentimientos");
@@ -59,6 +59,9 @@ public class Main extends Application {
                 break;
             case "BERT":
                 script = "analizador_bert.py";
+                break;
+            case "NAIVE BAYES":
+                script = "analizador_nb.py";
                 break;
             default:
                 Alert alerta = new Alert(Alert.AlertType.WARNING);
