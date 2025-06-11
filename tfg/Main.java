@@ -48,11 +48,15 @@ public class Main extends Application {
         listaComparacion.getSelectionModel().setSelectionMode(SelectionMode.MULTIPLE);
         listaComparacion.setPrefHeight(80);
 
-
-
 botonCompararArchivo.setOnAction(e -> {
     List<String> seleccionados = listaComparacion.getSelectionModel().getSelectedItems();
-    if (seleccionados.isEmpty()) return;
+    if (seleccionados.isEmpty()) {
+        Alert alerta = new Alert(Alert.AlertType.WARNING);
+        alerta.setTitle("Sin algoritmos");
+        alerta.setContentText("Por favor, selecciona al menos un algoritmo.");
+        alerta.showAndWait();
+        return;
+    }
 
     FileChooser fileChooser = new FileChooser();
     fileChooser.setTitle("Seleccionar archivo de texto con frases");
@@ -61,87 +65,65 @@ botonCompararArchivo.setOnAction(e -> {
     if (archivo == null) return;
 
     try (BufferedReader lector = new BufferedReader(new FileReader(archivo))) {
-        String linea;
-        int id = 1;
-        File comparacionCSV = new File("historial_comparacion.csv");
-        BufferedWriter writer = new BufferedWriter(new FileWriter(comparacionCSV));
-        writer.write("FraseID,Algoritmo,Sentimiento,Detalles\n");
-
-        Map<String, String> mapaScripts = Map.of(
-            "VADER", "vader.py",
-            "TEXTBLOB", "analizador_textblob.py",
-            "BERT", "analizador_bert.py",
-            "NAIVE BAYES", "analizador_nb.py",
-            "SVM", "analizador_svm.py"
-        );
-
-        while ((linea = lector.readLine()) != null) {
-            if (linea.trim().isEmpty()) continue;
-
-            String preprocesado = preprocesarTextoConPython(linea);
-            if (preprocesado == null || preprocesado.isEmpty()) continue;
-
-            for (String nombreAlgoritmo : seleccionados) {
-                String script = mapaScripts.getOrDefault(nombreAlgoritmo.toUpperCase(), null);
-                if (script == null) continue;
-
-                ProcessBuilder pb = new ProcessBuilder("python", "python/" + script);
-                Process process = pb.start();
-
-                try (BufferedWriter pyWriter = new BufferedWriter(new OutputStreamWriter(process.getOutputStream()))) {
-                    String json = "{\"texto\": \"" + preprocesado
-                            .replace("\\", "\\\\")
-                            .replace("\"", "\\\"")
-                            .replace("\n", "\\n")
-                            .replace("\r", "\\r") + "\"}";
-                    pyWriter.write(json);
-                    pyWriter.flush();
-                }
-
-                StringBuilder resultado = new StringBuilder();
-                try (BufferedReader pyReader = new BufferedReader(new InputStreamReader(process.getInputStream()))) {
-                    String lineaResultado;
-                    while ((lineaResultado = pyReader.readLine()) != null) {
-                        resultado.append(lineaResultado);
-                    }
-                }
-
-                String sentimiento = "";
-                String detalles = resultado.toString();
-                if (detalles.contains("\"etiqueta\"")) {
-                    int idx = detalles.indexOf("\"etiqueta\":\"");
-                    if (idx != -1) {
-                        int start = idx + 12;
-                        int end = detalles.indexOf("\"", start);
-                        sentimiento = detalles.substring(start, end);
-                    }
-                } else if (detalles.contains("\"label\"")) {
-                    int idx = detalles.indexOf("\"label\":\"");
-                    if (idx != -1) {
-                        int start = idx + 9;
-                        int end = detalles.indexOf("\"", start);
-                        sentimiento = detalles.substring(start, end);
-                    }
-                } else if (detalles.contains("\"resultado\"")) {
-                    sentimiento = detalles.substring(detalles.indexOf(":") + 1).replaceAll("[{}\"]", "").trim();
-                }
-
-                writer.write(id + "," + nombreAlgoritmo + "," + sentimiento + "," + detalles.replaceAll(",", ";") + "\n");
+        List<String> frases = lector.lines().filter(l -> !l.trim().isEmpty()).toList();
+        List<String> frasesPreprocesadas = new ArrayList<>();
+        for (String frase : frases) {
+            String pre = preprocesarTextoConPython(frase);
+            if (pre != null && !pre.isEmpty()) {
+                frasesPreprocesadas.add(pre);
+            } else {
+                frasesPreprocesadas.add(""); // Evitar desajustes
             }
-            id++;
         }
-        writer.close();
 
+        // Construir el JSON
+        JSONObject json = new JSONObject();
+        json.put("frases", frasesPreprocesadas);
+        json.put("algoritmos", seleccionados);
+
+        // Ejecutar el script Python paralelo
+        ProcessBuilder pb = new ProcessBuilder("python", "python/comparar_batch.py");
+        Process process = pb.start();
+
+        try (BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(process.getOutputStream()))) {
+            writer.write(json.toString());
+            writer.flush();
+        }
+
+        // Leer y mostrar posibles errores
+        try (BufferedReader errorReader = new BufferedReader(new InputStreamReader(process.getErrorStream()))) {
+            String linea;
+            while ((linea = errorReader.readLine()) != null) {
+                System.err.println("❌ Error desde Python: " + linea);
+            }
+        }
+
+        // Leer salida estándar (si se desea)
+        try (BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()))) {
+            String respuesta;
+            while ((respuesta = reader.readLine()) != null) {
+                System.out.println("✔ Salida Python: " + respuesta);
+            }
+        }
+
+        // Avisar al usuario al terminar
         Alert alerta = new Alert(Alert.AlertType.INFORMATION);
         alerta.setTitle("Comparación completada");
         alerta.setHeaderText(null);
-        alerta.setContentText("✅ Comparación finalizada. Los resultados se han guardado en 'historial_comparacion.csv'.");
+        alerta.setContentText("✅ Comparación terminada. Consulta 'historial_comparacion.csv'.");
         alerta.showAndWait();
 
     } catch (IOException ex) {
         ex.printStackTrace();
+        Alert error = new Alert(Alert.AlertType.ERROR);
+        error.setHeaderText("Error al procesar frases");
+        error.setContentText(ex.getMessage());
+        error.showAndWait();
     }
 });
+
+
+
 
 
 
