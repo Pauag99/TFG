@@ -64,24 +64,32 @@ botonCompararArchivo.setOnAction(e -> {
     File archivo = fileChooser.showOpenDialog(null);
     if (archivo == null) return;
 
-    try (BufferedReader lector = new BufferedReader(new FileReader(archivo))) {
-        List<String> frases = lector.lines().filter(l -> !l.trim().isEmpty()).toList();
-        List<String> frasesPreprocesadas = new ArrayList<>();
-        for (String frase : frases) {
-            String pre = preprocesarTextoConPython(frase);
-            if (pre != null && !pre.isEmpty()) {
-                frasesPreprocesadas.add(pre);
-            } else {
-                frasesPreprocesadas.add(""); // Evitar desajustes
+    try {
+        List<String> frases = new ArrayList<>();
+        try (BufferedReader lector = new BufferedReader(new FileReader(archivo))) {
+            String linea;
+            while ((linea = lector.readLine()) != null) {
+                if (linea.trim().isEmpty()) continue;
+                String[] partes = linea.split("\t", 2);
+                if (partes.length == 2) {
+                    frases.add(partes[1].trim()); // Usar solo el texto de la frase
+                } else {
+                    frases.add(linea.trim()); // Por si no hay tabulación
+                }
             }
         }
 
-        // Construir el JSON
+        List<String> frasesPreprocesadas = new ArrayList<>();
+        for (String frase : frases) {
+            String pre = preprocesarTextoConPython(frase);
+            frasesPreprocesadas.add((pre != null && !pre.isEmpty()) ? pre : "");
+        }
+
+        // Construir JSON con frases preprocesadas y algoritmos seleccionados
         JSONObject json = new JSONObject();
         json.put("frases", frasesPreprocesadas);
         json.put("algoritmos", seleccionados);
 
-        // Ejecutar el script Python paralelo
         ProcessBuilder pb = new ProcessBuilder("python", "python/comparar_batch.py");
         Process process = pb.start();
 
@@ -90,7 +98,7 @@ botonCompararArchivo.setOnAction(e -> {
             writer.flush();
         }
 
-        // Leer y mostrar posibles errores
+        // Leer errores de Python si los hay
         try (BufferedReader errorReader = new BufferedReader(new InputStreamReader(process.getErrorStream()))) {
             String linea;
             while ((linea = errorReader.readLine()) != null) {
@@ -98,7 +106,7 @@ botonCompararArchivo.setOnAction(e -> {
             }
         }
 
-        // Leer salida estándar (si se desea)
+        // Leer salida estándar si la hay
         try (BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()))) {
             String respuesta;
             while ((respuesta = reader.readLine()) != null) {
@@ -106,7 +114,6 @@ botonCompararArchivo.setOnAction(e -> {
             }
         }
 
-        // Avisar al usuario al terminar
         Alert alerta = new Alert(Alert.AlertType.INFORMATION);
         alerta.setTitle("Comparación completada");
         alerta.setHeaderText(null);
