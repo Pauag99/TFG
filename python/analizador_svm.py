@@ -1,29 +1,25 @@
-# archivo: python/analizador_svm.py
-
 import sys
 import json
 import joblib
 
-# Cargar modelo SVM
-modelo = joblib.load("modelo_svm/modelo_svm.pkl")
+# Cargar modelo SVM entrenado
+with open("modelo_svm/modelo_svm.pkl", "rb") as f:
+    modelo = joblib.load(f)
 
-# Leer JSON desde stdin
-try:
-    entrada = json.loads(sys.stdin.read())
-    texto = entrada.get("texto", "")
+# Leer entrada JSON desde stdin
+entrada = json.loads(sys.stdin.read())
+texto = entrada.get("texto", "")
 
-    # Realizar predicción
-    probabilidades = modelo.predict_proba([texto])[0]
-    etiquetas = modelo.classes_
+# Clasificar
+etiqueta = modelo.predict([texto])[0]
+probas = modelo.predict_proba([texto])[0]
+clases = modelo.classes_
 
-    resultado = dict(zip(etiquetas, map(lambda x: round(x, 4), probabilidades)))
-    etiqueta_predicha = etiquetas[probabilidades.argmax()]
+# Preparar respuesta
+resultado = {
+    "etiqueta": int(etiqueta),
+    "probabilidades": {str(clase): round(float(p), 4) for clase, p in zip(clases, probas)}
+}
 
-    print(json.dumps({
-        "resultado": {
-            "etiqueta": etiqueta_predicha,
-            "probabilidades": resultado
-        }
-    }))
-except Exception as e:
-    print(json.dumps({"error": str(e)}))
+# Enviar como JSON
+print(json.dumps({"resultado": resultado}))
