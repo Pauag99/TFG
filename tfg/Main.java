@@ -35,6 +35,8 @@ public class Main extends Application {
         Button botonAnalizar = new Button("Analizar sentimientos");
         Button botonComparar = new Button("Comparar algoritmos");
         Button botonCompararArchivo = new Button("Comparar archivo completo");
+        Button botonGraficar = new Button("Graficar NB vs SVM");
+
 
 
         Label mensajeLabel = new Label();
@@ -198,13 +200,49 @@ botonCompararArchivo.setOnAction(e -> {
             ComparadorAlgoritmos.compararAlgoritmos(seleccionados, texto, archivoCargado != null ? archivoCargado.getName() : "texto_manual");
         });
 
+        botonGraficar.setOnAction(e -> {
+    File csvFile = new File("historial_comparacion.csv");
+    if (!csvFile.exists()) {
+        mostrarAlerta("❌ El archivo 'historial_comparacion.csv' no existe.", Alert.AlertType.ERROR);
+        return;
+    }
+
+    Set<String> algoritmosEnCSV = new HashSet<>();
+    try (BufferedReader reader = new BufferedReader(new FileReader(csvFile))) {
+        String linea;
+        reader.readLine(); // Saltar encabezado
+        while ((linea = reader.readLine()) != null) {
+            String[] partes = linea.split(",");
+            if (partes.length >= 3) {
+                algoritmosEnCSV.add(partes[1].trim().toUpperCase());
+            }
+        }
+    } catch (IOException ex) {
+        mostrarAlerta("⚠️ Error al leer el CSV: " + ex.getMessage(), Alert.AlertType.ERROR);
+        return;
+    }
+
+    if (algoritmosEnCSV.size() == 2 && algoritmosEnCSV.contains("NAIVE BAYES") && algoritmosEnCSV.contains("SVM")) {
+        try {
+            ProcessBuilder pb = new ProcessBuilder("python", "python/graficar_resultados.py");
+            pb.inheritIO();
+            pb.start();
+        } catch (IOException ex) {
+            mostrarAlerta("❌ Error al ejecutar el script de graficado.", Alert.AlertType.ERROR);
+        }
+    } else {
+        mostrarAlerta("⚠️ El archivo debe contener SOLO resultados de 'NAIVE BAYES' y 'SVM'.", Alert.AlertType.WARNING);
+    }
+});
+
+
         VBox layout = new VBox(10,
                 new Label("Introduce texto:"), entradaTexto,
                 new HBox(10, botonCargar, botonPreprocesar),
                 new Label("Selecciona algoritmo para análisis individual:"), selectorAlgoritmo,
                 botonAnalizar,
                 new Label("Selecciona algoritmos para comparar:"), listaComparacion,botonComparar , botonCompararArchivo,
-                mensajeLabel
+                mensajeLabel, botonGraficar
         );
 
         layout.setStyle("-fx-padding: 20; -fx-alignment: center;");
@@ -213,6 +251,8 @@ botonCompararArchivo.setOnAction(e -> {
         primaryStage.setScene(scene);
         primaryStage.show();
     }
+
+    
 
     private String preprocesarTextoConPython(String texto) {
         try {

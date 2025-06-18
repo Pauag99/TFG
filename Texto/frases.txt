@@ -1,3 +1,0 @@
-1	This is a great product!
-2	I hated the experience.
-3	It was fine, I guess.
