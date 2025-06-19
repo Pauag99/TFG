@@ -200,10 +200,15 @@ botonCompararArchivo.setOnAction(e -> {
             ComparadorAlgoritmos.compararAlgoritmos(seleccionados, texto, archivoCargado != null ? archivoCargado.getName() : "texto_manual");
         });
 
-        botonGraficar.setOnAction(e -> {
-    File csvFile = new File("historial_comparacion.csv");
-    if (!csvFile.exists()) {
-        mostrarAlerta("❌ El archivo 'historial_comparacion.csv' no existe.", Alert.AlertType.ERROR);
+  botonGraficar.setOnAction(e -> {
+    FileChooser fileChooser = new FileChooser();
+    fileChooser.setTitle("Seleccionar archivo CSV con resultados SVM y NB");
+    fileChooser.getExtensionFilters().add(new FileChooser.ExtensionFilter("Archivos CSV", "*.csv"));
+    
+    File csvFile = fileChooser.showOpenDialog(null); // Puedes pasar primaryStage si lo tienes
+
+    if (csvFile == null) {
+        mostrarAlerta("⚠️ No se seleccionó ningún archivo.", Alert.AlertType.INFORMATION);
         return;
     }
 
@@ -224,7 +229,7 @@ botonCompararArchivo.setOnAction(e -> {
 
     if (algoritmosEnCSV.size() == 2 && algoritmosEnCSV.contains("NAIVE BAYES") && algoritmosEnCSV.contains("SVM")) {
         try {
-            ProcessBuilder pb = new ProcessBuilder("python", "python/graficar_resultados.py");
+            ProcessBuilder pb = new ProcessBuilder("python", "python/graficar_resultados.py", csvFile.getAbsolutePath());
             pb.inheritIO();
             pb.start();
         } catch (IOException ex) {
