@@ -1,6 +1,20 @@
 {
   "java.project.referencedLibraries": [
-    "C:/Users/Pauag/Documents/javafx-sdk-24.0.1/lib/*.jar",
-    "C:/Users/Pauag/Documents/TFG DATA/json-20240303.jar"
+    "c:\\Users\\Pau\\Documents\\javafx-sdk-24.0.1\\lib\\javafx.fxml.jar",
+    "c:\\Users\\Pau\\Documents\\javafx-sdk-24.0.1\\lib\\jdk.jsobject.jar",
+    "c:\\Users\\Pau\\Documents\\javafx-sdk-24.0.1\\lib\\jfx.incubator.richtext.jar",
+    "c:\\Users\\Pau\\Documents\\javafx-sdk-24.0.1\\lib\\javafx.web.jar",
+    "c:\\Users\\Pau\\Documents\\javafx-sdk-24.0.1\\lib\\javafx.swing.jar",
+    "c:\\Users\\Pau\\Documents\\javafx-sdk-24.0.1\\lib\\jfx.incubator.input.jar",
+    "c:\\Users\\Pau\\Documents\\javafx-sdk-24.0.1\\lib\\javafx.media.jar",
+    "c:\\Users\\Pau\\Documents\\javafx-sdk-24.0.1\\lib\\javafx-swt.jar",
+    "c:\\Users\\Pau\\Documents\\javafx-sdk-24.0.1\\lib\\javafx.base.jar",
+    "c:\\Users\\Pau\\Documents\\TFG DATA\\json-20240303.jar",
+    "c:\\Users\\Pau\\Documents\\javafx-sdk-24.0.1\\lib\\javafx.controls.jar",
+    "c:\\Users\\Pau\\Documents\\javafx-sdk-24.0.1\\lib\\javafx.graphics.jar"
+  ],
+  "java.project.sourcePaths": [
+    "src"
   ]
 }
+

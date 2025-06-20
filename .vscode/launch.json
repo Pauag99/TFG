@@ -6,7 +6,9 @@
       "name": "Ejecutar JavaFX",
       "request": "launch",
       "mainClass": "tfg.Main",
-      "vmArgs": "--module-path C:/Users/Pauag/Documents/javafx-sdk-24.0.1/lib --add-modules javafx.controls"
+      "vmArgs": "--module-path C:/Users/Pau/Documents/javafx-sdk-24.0.1/lib --add-modules javafx.controls,javafx.fxml"
+
+
     }
   ]
 }
