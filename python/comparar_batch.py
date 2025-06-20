@@ -4,6 +4,8 @@ import json
 import subprocess
 import csv
 from multiprocessing import Pool
+from datetime import datetime
+import os
 
 scripts = {
     "VADER": "python/vader.py",
@@ -49,10 +51,20 @@ def main():
     with Pool() as pool:
         resultados = pool.map(procesar_entrada, tareas)
 
-    with open("historial_comparacion.csv", "w", newline="", encoding="utf-8") as f:
+    # Crear carpeta si no existe
+    os.makedirs("texto", exist_ok=True)
+
+    # Generar nombre de archivo con fecha y hora
+    nombre_archivo = datetime.now().strftime("texto/%Y-%m-%d_%H-%M-%S.csv")
+
+    # Guardar resultados en CSV
+    with open(nombre_archivo, "w", newline="", encoding="utf-8") as f:
         writer = csv.DictWriter(f, fieldnames=["FraseID", "Algoritmo", "Resultado"])
         writer.writeheader()
         writer.writerows(resultados)
+
+    # Mostrar ruta por salida estándar
+    print(f"✔ Resultados guardados en: {nombre_archivo}")
 
 if __name__ == "__main__":
     main()
