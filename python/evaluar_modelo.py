@@ -40,6 +40,6 @@ def evaluar_modelo(path_modelo, directorio_test, salida_csv):
 
 if __name__ == "__main__":
     modelo = sys.argv[1]  # Ej: modelo_nb/modelo_nb.pkl
-    carpeta_test = "C:/Users/Pauag/Documents/TFG DATA/datasets/aclImdb/test"  # Ajusta si hiciste copia
+    carpeta_test = "C:/Users/Pau/Documents/TFG DATA/datasets/aclImdb/test"  # Ajusta si hiciste copia
     salida = sys.argv[2]  # Ej: resultados_nb.csv
     evaluar_modelo(modelo, carpeta_test, salida)

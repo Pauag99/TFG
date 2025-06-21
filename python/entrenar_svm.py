@@ -8,7 +8,7 @@ from sklearn.model_selection import train_test_split
 from sklearn.metrics import classification_report
 
 # Ruta base al dataset
-BASE_DIR = "C:/Users/Pauag/Documents/TFG DATA/datasets/aclImdb/train"
+BASE_DIR = "C:/Users/Pau/Documents/TFG DATA/datasets/aclImdb/train"
 
 # Función para cargar reseñas
 def cargar_datos(base_dir):
