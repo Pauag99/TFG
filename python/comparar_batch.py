@@ -1,4 +1,5 @@
 # comparar_batch.py
+
 import sys
 import json
 import subprocess
@@ -6,6 +7,7 @@ import csv
 from multiprocessing import Pool
 from datetime import datetime
 import os
+import time  # Para medir el tiempo de ejecución
 
 scripts = {
     "VADER": "python/vader.py",
@@ -43,19 +45,21 @@ def procesar_entrada(params):
         }
 
 def main():
+    start_time = time.time()  # ⏱️ Inicio
+
     datos = json.load(sys.stdin)
     frases = datos["frases"]
     algoritmos = datos["algoritmos"]
     tareas = [(i+1, frase, algo) for i, frase in enumerate(frases) for algo in algoritmos]
 
-    with Pool() as pool:
+    with Pool(processes=1) as pool:
         resultados = pool.map(procesar_entrada, tareas)
 
     # Crear carpeta si no existe
-    os.makedirs("texto", exist_ok=True)
+    os.makedirs("Texto", exist_ok=True)
 
     # Generar nombre de archivo con fecha y hora
-    nombre_archivo = datetime.now().strftime("texto/%Y-%m-%d_%H-%M-%S.csv")
+    nombre_archivo = datetime.now().strftime("Texto/%Y-%m-%d_%H-%M-%S.csv")
 
     # Guardar resultados en CSV
     with open(nombre_archivo, "w", newline="", encoding="utf-8") as f:
@@ -63,8 +67,17 @@ def main():
         writer.writeheader()
         writer.writerows(resultados)
 
-    # Mostrar ruta por salida estándar
+    # Mostrar ruta del archivo
     print(f"✔ Resultados guardados en: {nombre_archivo}")
+
+    # ⏱️ Mostrar tiempo total de ejecución
+    end_time = time.time()
+    elapsed = end_time - start_time
+    print(f"🕒 Tiempo total de ejecución: {elapsed:.2f} segundos", file=sys.stderr, flush=True)
+    # ⏱️ Guardar tiempo total en archivo log
+    with open("Texto/tiempo.log", "w", encoding="utf-8") as log:
+        log.write(f"{elapsed:.2f}")
+
 
 if __name__ == "__main__":
     main()

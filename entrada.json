@@ -1,3 +1,4 @@
 {
-  "texto": "The movie was brilliant and emotional. I really enjoyed it!"
+  "frases": ["I love this", "Terrible movie"],
+  "algoritmos": ["VADER"]
 }

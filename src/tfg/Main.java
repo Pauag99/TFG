@@ -72,61 +72,70 @@ public class Main extends Application {
         });
 
         botonCompararArchivo.setOnAction(e -> {
-            List<String> seleccionados = listaComparacion.getSelectionModel().getSelectedItems();
-            if (seleccionados.isEmpty()) {
-                mostrarAlerta("Por favor, selecciona al menos un algoritmo.", Alert.AlertType.WARNING);
-                return;
+    List<String> seleccionados = listaComparacion.getSelectionModel().getSelectedItems();
+    if (seleccionados.isEmpty()) {
+        mostrarAlerta("Por favor, selecciona al menos un algoritmo.", Alert.AlertType.WARNING);
+        return;
+    }
+
+    FileChooser fileChooser = new FileChooser();
+    fileChooser.setTitle("Seleccionar archivo de texto con frases");
+    fileChooser.getExtensionFilters().add(new FileChooser.ExtensionFilter("Archivos de texto", "*.txt"));
+    File archivo = fileChooser.showOpenDialog(null);
+    if (archivo == null) return;
+
+    try {
+        List<String> frases = new ArrayList<>();
+        try (BufferedReader lector = new BufferedReader(new FileReader(archivo))) {
+            String linea;
+            while ((linea = lector.readLine()) != null) {
+                if (linea.trim().isEmpty()) continue;
+                String[] partes = linea.split("\t", 2);
+                frases.add((partes.length == 2) ? partes[1].trim() : linea.trim());
             }
+        }
 
-            FileChooser fileChooser = new FileChooser();
-            fileChooser.setTitle("Seleccionar archivo de texto con frases");
-            fileChooser.getExtensionFilters().add(new FileChooser.ExtensionFilter("Archivos de texto", "*.txt"));
-            File archivo = fileChooser.showOpenDialog(null);
-            if (archivo == null) return;
+        List<String> frasesPreprocesadas = new ArrayList<>();
+        for (String frase : frases) {
+            String pre = preprocesarTextoConPython(frase);
+            frasesPreprocesadas.add((pre != null && !pre.isEmpty()) ? pre : "");
+        }
 
-            try {
-                List<String> frases = new ArrayList<>();
-                try (BufferedReader lector = new BufferedReader(new FileReader(archivo))) {
-                    String linea;
-                    while ((linea = lector.readLine()) != null) {
-                        if (linea.trim().isEmpty()) continue;
-                        String[] partes = linea.split("\t", 2);
-                        frases.add((partes.length == 2) ? partes[1].trim() : linea.trim());
-                    }
-                }
+        JSONObject json = new JSONObject();
+        json.put("frases", frasesPreprocesadas);
+        json.put("algoritmos", seleccionados);
 
-                List<String> frasesPreprocesadas = new ArrayList<>();
-                for (String frase : frases) {
-                    String pre = preprocesarTextoConPython(frase);
-                    frasesPreprocesadas.add((pre != null && !pre.isEmpty()) ? pre : "");
-                }
+        // ⏱️ Inicio de la medición de tiempo
+        long inicio = System.nanoTime();
 
-                JSONObject json = new JSONObject();
-                json.put("frases", frasesPreprocesadas);
-                json.put("algoritmos", seleccionados);
+        ProcessBuilder pb = new ProcessBuilder("python", "python/comparar_batch.py");
+        Process process = pb.start();
 
-                ProcessBuilder pb = new ProcessBuilder("python", "python/comparar_batch.py");
-                Process process = pb.start();
+        try (BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(process.getOutputStream()))) {
+            writer.write(json.toString());
+            writer.flush();
+        }
 
-                try (BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(process.getOutputStream()))) {
-                    writer.write(json.toString());
-                    writer.flush();
-                }
-
-                try (BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()))) {
-                    String respuesta;
-                    while ((respuesta = reader.readLine()) != null) {
-                        System.out.println("✔ Salida Python: " + respuesta);
-                    }
-                }
-
-                mostrarAlerta("✅ Comparación completada.", Alert.AlertType.INFORMATION);
-
-            } catch (IOException ex) {
-                ex.printStackTrace();
-                mostrarAlerta("❌ Error al procesar frases: " + ex.getMessage(), Alert.AlertType.ERROR);
+        try (BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()))) {
+            String respuesta;
+            while ((respuesta = reader.readLine()) != null) {
+                System.out.println("✔ Salida Python: " + respuesta);
             }
-        });
+        }
+
+        // ⏱️ Fin de la medición de tiempo
+        long fin = System.nanoTime();
+        double segundos = (fin - inicio) / 1_000_000_000.0;
+        System.out.println("🕒 Tiempo total de ejecución: " + segundos + " segundos");
+
+        mostrarAlerta("✅ Comparación completada en " + String.format("%.2f", segundos) + " segundos.", Alert.AlertType.INFORMATION);
+
+    } catch (IOException ex) {
+        ex.printStackTrace();
+        mostrarAlerta("❌ Error al procesar frases: " + ex.getMessage(), Alert.AlertType.ERROR);
+    }
+});
+
 
         botonCargar.setOnAction(e -> {
             FileChooser fileChooser = new FileChooser();

@@ -1,0 +1,4 @@
+FraseID,Algoritmo,Resultado
+1,VADER,"{""resultado"": {""neg"": 0.0, ""neu"": 0.872, ""pos"": 0.128, ""compound"": 0.3612}}"
+2,VADER,"{""resultado"": {""neg"": 0.0, ""neu"": 0.586, ""pos"": 0.414, ""compound"": 0.8625}}"
+3,VADER,"{""resultado"": {""neg"": 0.0, ""neu"": 1.0, ""pos"": 0.0, ""compound"": 0.0}}"
