@@ -1,80 +1,91 @@
-# TFG
-Durante tu proyecto de análisis de sentimientos en inglés con interfaz Java y scripts Python, has instalado las siguientes **dependencias**:
+# Analizador de Sentimientos con Comparación de Modelos
 
----
+Este proyecto permite analizar el sentimiento de textos en inglés utilizando múltiples algoritmos de clasificación, comparando sus resultados y visualizando sus métricas de rendimiento. La aplicación dispone de una interfaz gráfica construida con JavaFX, que se integra con scripts Python para realizar el procesamiento y la clasificación de forma modular.
 
-### 🐍 **Dependencias de Python**
+## 📌 Funcionalidades principales
 
-#### 🔧 Generales
+- Carga y preprocesamiento de texto en inglés.
+- Análisis de sentimientos con varios modelos:
+  - VADER
+  - TextBlob
+  - Naive Bayes
+  - SVM
+  - BERT
+- Comparación de resultados entre modelos.
+- Análisis individual o por lotes (desde archivos `.txt`).
+- Exportación de resultados en archivos `.csv`.
+- Visualización de métricas y probabilidades.
+- Historial de análisis por fecha, modelo y texto.
+
+## ⚙️ Requisitos
+
+### Backend (Python):
+
+- Python 3.8+
+- Bibliotecas necesarias:
+
+```
+pandas
+scikit-learn
+transformers
+nltk
+matplotlib
+textblob
+vaderSentiment
+```
+
+Instalación de dependencias:
 
 ```bash
-pip install nltk
-pip install emoji
-pip install textblob
-pip install transformers
-pip install torch
-pip install scikit-learn
+pip install -r requirements.txt
 ```
 
-#### 📦 Recursos adicionales (usando código en los scripts)
+### Frontend (Java):
 
-* Desde `nltk`:
+- Java 17+
+- JavaFX 17+
+- Uso de ProcessBuilder para ejecutar scripts Python desde la interfaz
 
-  ```python
-  import nltk
-  nltk.download('punkt')
-  nltk.download('stopwords')
-  nltk.download('wordnet')
-  ```
+## 🚀 Cómo ejecutar el proyecto
 
-* Desde `textblob`:
-
-  ```python
-  python -m textblob.download_corpora
-  ```
-
-#### 🔤 Análisis con modelos BERT:
+1. Compilar y ejecutar la interfaz JavaFX con tu IDE o desde terminal:
 
 ```bash
-pip install transformers
-pip install torch
+javac -cp "ruta/javafx/lib/*" interfaz/*.java
+java -cp "ruta/javafx/lib/*:." interfaz.Main
 ```
 
----
+2. Seleccionar una frase o un archivo `.txt` desde la interfaz.
+3. Elegir los algoritmos deseados.
+4. Visualizar los resultados y compararlos.
+5. Graficar los resultados según necesidad.
 
-### ☕ **Dependencias para Java y JavaFX**
+## 📈 Comparación de modelos
 
-#### 📁 Librerías añadidas manualmente:
+El botón **"Comparar archivo completo"** permite analizar todas las frases de un archivo línea por línea, generar un CSV con los resultados y visualizar gráficos comparativos mediante el script `graficar_resultados.py`.
 
-* Carpeta JavaFX:
 
-  ```
-  C:/Users/Pauag/Documents/javafx-sdk-24.0.1/lib/*.jar
-  ```
+## 🧪 Dataset usado
 
-* JSON (para manejo de datos entre Java y Python):
+El modelo ha sido entrenado y evaluado sobre el conjunto de datos **IMDb Movie Reviews**, ampliamente utilizado en tareas de análisis de sentimientos.
+El analisis de frases se ha realizado sobre el conjunto de datos **Kaggle Movie Review Sentiment Analysis**
 
-  ```
-  C:/Users/Pauag/Documents/TFG DATA/json-20240303.jar
-  ```
+## ✅ Estado actual
 
-#### 📦 En `settings.json` de VSCode:
+- Funcionalidad estable y operativa.
+- Modelos NB y SVM entrenados y comparables.
+- Comparación entre 5 algoritmos disponible.
+- Interfaz básica funcional con mejoras en desarrollo.
 
-```json
-{
-  "java.project.referencedLibraries": [
-    "C:/Users/Pauag/Documents/javafx-sdk-24.0.1/lib/*.jar",
-    "C:/Users/Pauag/Documents/TFG DATA/json-20240303.jar"
-  ]
-}
-```
+## 📌 Trabajo futuro
 
----
+- Mejora de la interfaz (separación de análisis individual y masivo).
+- Visualización directa de métricas y resultados.
+- Soporte multilingüe.
+- Despliegue como API REST o aplicación web.
+- Evaluación ética y detección de sesgos.
 
-### 🔄 **Integración Java ↔ Python**
+## 👤 Autor
 
-* No requiere dependencia externa, pero **usa `ProcessBuilder`** en Java para ejecutar scripts Python desde la interfaz.
-
----
-
-Si quieres, puedo ayudarte a generar un `requirements.txt` para Python o una plantilla de `pom.xml` (si usas Maven en el futuro). ¿Te interesaría?
+Este proyecto ha sido desarrollado como parte de un trabajo académico.  
+**Autor**: *[Pau Aguilar Silvestre]*

@@ -52,7 +52,7 @@ def main():
     algoritmos = datos["algoritmos"]
     tareas = [(i+1, frase, algo) for i, frase in enumerate(frases) for algo in algoritmos]
 
-    with Pool(processes=1) as pool:
+    with Pool(processes=os.cpu_count()) as pool:
         resultados = pool.map(procesar_entrada, tareas)
 
     # Crear carpeta si no existe
