@@ -77,4 +77,3 @@ pip install torch
 
 ---
 
-Si quieres, puedo ayudarte a generar un `requirements.txt` para Python o una plantilla de `pom.xml` (si usas Maven en el futuro). ¿Te interesaría?
